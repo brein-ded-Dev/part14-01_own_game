@@ -97,15 +97,9 @@ class Background(Assets):
         
     #drawing the background
     def draw_bg(self):
-        #scrolling / moving background image by 5 pixels every call
-        self.scroll -=5
-        
-        #images required to fill the screen
-        images = math.ceil(super().width / self.bg.get_width()) +1
-        
-        #blitting all the images necessary to fill the screen
-        for i in range(0,images):
-            super().window.blit(self.bg,(i*self.bg.get_width()+self.scroll,0))
+        for i in range(0,3):
+            print(self.scroll)
+            super().window.blit(self.bg,(i*self.bg_x+self.scroll,0))
         
         
 #class object to run game
@@ -124,6 +118,7 @@ while game:
     #updating pygame display every Frame
     py.display.flip()
     
+    new_game.scroll -=5 
     new_game.draw_bg()
     #running game with defined FPS
     new_game.clock.tick(new_game.FPS)
