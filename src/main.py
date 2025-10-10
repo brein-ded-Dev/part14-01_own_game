@@ -74,7 +74,7 @@ class Background(Assets):
         super().__init__()
         
         #loading bg image
-        self.bg = py.image.load("src/bg.png").convert()
+        self.bg = py.image.load("src/Untitled design.png").convert()
         
         #bg image co-ords
         self.bg_x = 0
@@ -105,11 +105,46 @@ class Background(Assets):
         
         #blitting all the images necessary to fill the screen
         for i in range(0,images):
-            super().window.blit(self.bg,(i*self.bg.get_width()+self.scroll,0))
+            self.window.blit(self.bg,(int(i*self.bg.get_width()+self.scroll)-10,0))
         
         
+class Bird(Background):
+    def __init__(self):
+        super().__init__()
+        #bird image
+        self.bird_og = py.image.load("src/pngwing.com.png").convert_alpha()
+        
+        #bird co-ords
+        self.bird_x = 0
+        self.__bird_y = 0
+        
+        #scaling down bird image
+        self.w = int(self.bird_og.get_width()*0.15)
+        self.h = int(self.bird_og.get_height()*0.15)
+        self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
+        
+    @property
+    def bird_y(self):
+        return self.__bird_y
+    
+    @bird_y.setter
+    def bird_y(self,val):
+        #ensuring bird remains within window limits
+        if self.__bird_y +self.h+50  >= self.height:
+            self.__bird_y = self.height -self.h-50
+        elif self.__bird_y <0:
+            self.__bird_y = 0
+        else:
+            self.__bird_y = val
+    
+    def draw_bird (self):
+        self.window.blit(self.bird,(self.bird_x,self.bird_y))
+        #constantly falling bird
+        
+        self.bird_y +=5
+           
 #class object to run game
-new_game = Background()  
+new_game = Bird()
  
        
 while game:
@@ -125,5 +160,6 @@ while game:
     py.display.flip()
     
     new_game.draw_bg()
+    new_game.draw_bird()
     #running game with defined FPS
     new_game.clock.tick(new_game.FPS)

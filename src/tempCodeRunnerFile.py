@@ -74,7 +74,7 @@ class Background(Assets):
         super().__init__()
         
         #loading bg image
-        self.bg = py.image.load("src/bg.png").convert()
+        self.bg = py.image.load("src/flappy.png").convert()
         
         #bg image co-ords
         self.bg_x = 0
@@ -97,13 +97,44 @@ class Background(Assets):
         
     #drawing the background
     def draw_bg(self):
-        for i in range(0,3):
-            print(self.scroll)
-            super().window.blit(self.bg,(i*self.bg_x+self.scroll,0))
+        #scrolling / moving background image by 5 pixels every call
+        self.scroll -=5
+        
+        #images required to fill the screen
+        images = math.ceil(super().width / self.bg.get_width()) +1
+        
+        #blitting all the images necessary to fill the screen
+        for i in range(0,images):
+            self.window.blit(self.bg,(int(i*self.bg.get_width()+self.scroll)-10,0))
         
         
+class Bird(Background):
+    def __init__(self):
+        super().__init__()
+        self.bird_og = py.image.load("src/pngwing.com.png").convert_alpha()
+        self.bird_x = 0
+        self.__bird_y = 0
+        self.w = int(self.bird_og.get_width()*0.15)
+        self.h = int(self.bird_og.get_height()*0.15)
+        self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
+    @property
+    def bird_y(self):
+        return self.__bird_y
+    @bird_y.setter
+    def bird_y(self,val):
+        if self.__bird_y +self.h  >= self.height:
+            self.__bird_y = self.height -self.h
+        elif self.__bird_y <0:
+            self.__bird_y = 0
+        else:
+            self.__bird_y = val
+    
+    def draw_bird (self):
+        super().window.blit(self.bird,(self.bird_x,self.bird_y))
+        self.bird_y +=5
+           
 #class object to run game
-new_game = Background()  
+new_game = Bird()
  
        
 while game:
@@ -118,7 +149,7 @@ while game:
     #updating pygame display every Frame
     py.display.flip()
     
-    new_game.scroll -=5 
     new_game.draw_bg()
+    new_game.draw_bird()
     #running game with defined FPS
     new_game.clock.tick(new_game.FPS)
