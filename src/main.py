@@ -112,16 +112,21 @@ class Bird(Background):
     def __init__(self):
         super().__init__()
         #bird image
-        self.bird_og = py.image.load("src/pngwing.com.png").convert_alpha()
+        self.bird_og = py.image.load("src/pngwing.com(1).png").convert_alpha()
         
         #bird co-ords
-        self.bird_x = 0
+        self.bird_x = 400
         self.__bird_y = 0
         
         #scaling down bird image
         self.w = int(self.bird_og.get_width()*0.15)
         self.h = int(self.bird_og.get_height()*0.15)
         self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
+        
+        #smooth motion
+        self.gravity = 0.08
+        self.velocity = 0
+        
         
     @property
     def bird_y(self):
@@ -132,17 +137,36 @@ class Bird(Background):
         #ensuring bird remains within window limits
         if self.__bird_y +self.h+50  >= self.height:
             self.__bird_y = self.height -self.h-50
+            self.velocity =0
         elif self.__bird_y <0:
             self.__bird_y = 0
+            self.velocity =0
         else:
             self.__bird_y = val
     
+    
     def draw_bird (self):
+        self.__bird_y = int(self.bird_y)
+        print(self.bird_y)
+        self.jump(False)
         self.window.blit(self.bird,(self.bird_x,self.bird_y))
-        #constantly falling bird
         
-        self.bird_y +=5
-           
+        
+    #constantly free falling bird using gravity for smoother transition
+    def fall(self):
+        self.velocity += self.gravity
+        self.bird_y += self.velocity
+    
+    #FLAPPY bird.
+    def jump(self,bool):
+        if bool:
+            self.velocity -= 5
+            self.__bird_y += self.velocity
+        else:
+            self.fall()
+            
+            
+            
 #class object to run game
 new_game = Bird()
  
@@ -155,6 +179,9 @@ while game:
         if event.type == py.QUIT:
             game = False
             exit()
+        if event.type == py.KEYDOWN:
+            if event.key == py.K_SPACE:
+                new_game.jump(True)
     
     #updating pygame display every Frame
     py.display.flip()
