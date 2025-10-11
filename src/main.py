@@ -118,15 +118,13 @@ class Bird(Background):
         self.bird_x = 400
         self.__bird_y = 0
         
-        #scaling down bird image
-        self.w = int(self.bird_og.get_width()*0.15)
-        self.h = int(self.bird_og.get_height()*0.15)
-        self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
-        
         #smooth motion
-        self.gravity = 0.08
+        self.gravity = 0.1
         self.velocity = 0
         
+        self.bird_scale()
+        
+    
         
     @property
     def bird_y(self):
@@ -135,8 +133,8 @@ class Bird(Background):
     @bird_y.setter
     def bird_y(self,val):
         #ensuring bird remains within window limits
-        if self.__bird_y +self.h+50  >= self.height:
-            self.__bird_y = self.height -self.h-50
+        if self.__bird_y +self.h+65 >= self.height:
+            self.__bird_y = self.height -self.h -65
             self.velocity =0
         elif self.__bird_y <0:
             self.__bird_y = 0
@@ -144,10 +142,15 @@ class Bird(Background):
         else:
             self.__bird_y = val
     
-    
+    def bird_scale(self):
+        #scaling down bird image
+        self.w = int(self.bird_og.get_width()*0.15)
+        self.h = int(self.bird_og.get_height()*0.15)
+        self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
+        
+        
     def draw_bird (self):
         self.__bird_y = int(self.bird_y)
-        print(self.bird_y)
         self.jump(False)
         self.window.blit(self.bird,(self.bird_x,self.bird_y))
         
@@ -160,15 +163,50 @@ class Bird(Background):
     #FLAPPY bird.
     def jump(self,bool):
         if bool:
-            self.velocity -= 5
+            self.velocity -= 3
             self.__bird_y += self.velocity
         else:
             self.fall()
             
-            
+class Pipes(Bird):
+    def __init__(self):
+        super().__init__()
+        #pipe image
+        self.pipe = py.image.load("src/Pi7_cropper.png").convert_alpha()
+        #upside down pipe image
+        self.pipe_up = py.transform.rotate(self.pipe,180)
+        
+        # height factor to control the length of the pipe 
+        #
+        #
+        #NEEDS WORK, WRONG WAY TO DEAL WITH PIPE Y COORD
+        self.h_factor = 0.3 
+        
+        #speed of the pipes moving in the x direction
+        self.x_speed = -5
+        
+        #x-coord of the pipe
+        self.p_x = 1200
+        
+        #function to make init look cleaner
+        self.pipet()
+
+        
+    def pipet(self):
+        #scaling pipes correctly
+        self.p_w = int(self.pipe.get_width()*0.5)
+        self.p_h = int(self.pipe.get_height()*self.h_factor)
+        self.pipe = py.transform.scale(self.pipe,(self.p_w,self.p_h))
+        self.pipe_up = py.transform.scale(self.pipe_up,(self.p_w,self.p_h))
+        
+        
+    def draw_pipe(self):
+        self.window.blit(self.pipe,(self.p_x,526-(self.p_h)))
+        self.window.blit(self.pipe_up,(self.p_x,((self.h_factor)*1000)-85-self.p_h))
+        self.p_x += self.x_speed
             
 #class object to run game
-new_game = Bird()
+new_game = Pipes()
  
        
 while game:
@@ -188,5 +226,6 @@ while game:
     
     new_game.draw_bg()
     new_game.draw_bird()
+    new_game.draw_pipe()
     #running game with defined FPS
     new_game.clock.tick(new_game.FPS)
