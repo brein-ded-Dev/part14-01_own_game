@@ -172,37 +172,44 @@ class Pipes(Bird):
     def __init__(self):
         super().__init__()
         #pipe image
-        self.pipe = py.image.load("src/Pi7_cropper.png").convert_alpha()
+        self.pipe = py.image.load("src/Pi7_cropper(1).png").convert_alpha()
         #upside down pipe image
         self.pipe_up = py.transform.rotate(self.pipe,180)
         
-        # height factor to control the length of the pipe 
-        #
-        #
-        #NEEDS WORK, WRONG WAY TO DEAL WITH PIPE Y COORD
-        self.h_factor = 0.3 
-        
+        #spawn rate = how far apart will each pipe/obstacle be. 
+        self.spawn_rate = 100      
         #speed of the pipes moving in the x direction
         self.x_speed = -5
-        
         #x-coord of the pipe
-        self.p_x = 1200
+        self.p_x = self.width+self.spawn_rate
         
-        #function to make init look cleaner
+        self.p_w = int(self.pipe.get_width()*0.5)
+        self.p_h = self.pipe.get_height()
+        #top co-ordinate of the inverted pipe
+        self.h_factor =  -int(self.pipe.get_height()) +r.randint(0,426)
+        
+        #function to scale pipes according to y coords
         self.pipet()
 
-        
     def pipet(self):
-        #scaling pipes correctly
-        self.p_w = int(self.pipe.get_width()*0.5)
-        self.p_h = int(self.pipe.get_height()*self.h_factor)
-        self.pipe = py.transform.scale(self.pipe,(self.p_w,self.p_h))
-        self.pipe_up = py.transform.scale(self.pipe_up,(self.p_w,self.p_h))
+        #scaling bottom pipe so the bottom ends above the green line in the background
+        s = (-138-self.h_factor)/self.p_h
+        #scaling upper pipe for look purposes
+        s_up = (self.h_factor+self.p_h)/self.p_h
+        
+        self.pipe = py.transform.scale(self.pipe,(self.p_w,int(self.p_h*s)))
+        self.pipe_up = py.transform.scale(self.pipe_up,(self.p_w,int(self.p_h*s_up)))
+        
         
         
     def draw_pipe(self):
-        self.window.blit(self.pipe,(self.p_x,526-(self.p_h)))
-        self.window.blit(self.pipe_up,(self.p_x,((self.h_factor)*1000)-85-self.p_h))
+        
+        self.window.blit(self.pipe_up,(self.p_x,0))
+
+        #blitting bottom pipe while ensuring a 100px gap between the pipes for the bird to pass through
+        self.window.blit(self.pipe,(self.p_x,self.p_h+100+self.h_factor))
+        
+        #moving pipes towards left.
         self.p_x += self.x_speed
             
 #class object to run game
