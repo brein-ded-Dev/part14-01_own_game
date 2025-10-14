@@ -1,7 +1,6 @@
 import pygame as py
 import math 
 import random as r
-import sys
 
 # variable responsible for running the game
 game = True
@@ -107,6 +106,7 @@ class Background(Assets):
         
         
 class Bird(Background):
+    
     def __init__(self):
         super().__init__()
         #bird image
@@ -125,6 +125,7 @@ class Bird(Background):
         self.velocity = 0
         
         self.bird_scale()
+        self.draw_bird()
         
             
     @property
@@ -150,16 +151,12 @@ class Bird(Background):
         
         self.bird = py.transform.scale(self.bird_og,(self.w,self.h))
         
-        
     def draw_bird (self):
         self.__bird_y = int(self.bird_y)
         self.jump(False)
         self._window.blit(self.bird,(self.bird_x,self.bird_y))
         self._bird_rect = self.bird.get_rect(topleft=(self.bird_x,self.bird_y)) #type:ignore
     
-    @property
-    def bird_rect(self):
-        return self._bird_rect 
     
     #constantly free falling bird using gravity for smoother transition
     def fall(self):
@@ -179,7 +176,7 @@ class Bird(Background):
                 
             
 class Pipes(Bird):
-    
+    point = 0
     def __init__(self):
         
         #pipe image
@@ -216,23 +213,39 @@ class Pipes(Bird):
         self.pipe_up = py.transform.scale(self.pipe_up,(self.p_w,int(self.p_h*s_up)))
         
         
-        
-    def draw_pipe(self):
-        
+    #drawing pipes/obstacles with a 100 px gap for bird to go through    
+    def draw_pipe(self,obj):
         self._window.blit(self.pipe_up,(self.p_x,0))
-
-        #blitting bottom pipe while ensuring a 100px gap between the pipes for the bird to pass through
         self._window.blit(self.pipe,(self.p_x,self.p_h+100+self.h_factor))
         
-        self._window.blit(self.coin,(self.p_x+25,self.p_h+self.h_factor+30))
+        self.pipe_up_rect = self.pipe_up.get_rect(topleft=(self.p_x,0))
+        self.pipe_rect = self.pipe.get_rect(topleft=(self.p_x,self.p_h+100+self.h_factor))
         
-        self._coin_rect = self.coin.get_rect(topleft=(self.p_x+25,self.p_h+self.h_factor+30)) #type:ignore
-        
-        #moving pipes towards left.
         self.p_x += self.x_speed
-    @property
-    def coin_rect(self):
-        return self._coin_rect
+        
+        self.pointss(obj)
+        return self.collision(obj)
+
+        
+    #drawing coins as collectable object as well as point keeping    
+    def draw_coin(self,bool):
+        if not bool:
+            self._window.blit(self.coin,(self.p_x+25,self.p_h+self.h_factor+30))
+            self._coin_rect = self.coin.get_rect(topleft=(self.p_x+25,self.p_h+self.h_factor+30)) #type:ignore
+        
+    #collision check + points update
+    def pointss(self,obj):
+        self.draw_coin(self.collected)
+        if obj._bird_rect.colliderect(self._coin_rect) and not self.collected:
+            self.collected = True
+            Pipes.point +=1
+            
+    # collision check with pipes         
+    def collision(self,obj):
+        if obj._bird_rect.colliderect(self.pipe_rect) or  obj._bird_rect.colliderect(self.pipe_up_rect):
+            return False  
+        else: return True      
+              
             
 #class object to run game
 new_game = Bird()
@@ -248,6 +261,7 @@ while game:
         #quit event
         if event.type == py.QUIT:
             game = False
+            print(Pipes.point)
             exit()
             
         if event.type == py.KEYDOWN:
@@ -257,9 +271,6 @@ while game:
                 game=False
                 py.time.wait(5000)
             
-                
-
-    
     #updating pygame display every Frame
     py.display.flip()
     new_game.draw_bg()
@@ -268,7 +279,10 @@ while game:
         pipes.append(Pipes())
     
     for pipe in pipes[:]:
-        pipe.draw_pipe()
+        if pipe.draw_pipe(new_game):
+            pass
+        else:
+            break
     
     
     new_game.draw_bird()
@@ -276,3 +290,9 @@ while game:
     new_game.clock.tick(new_game.FPS)
     
 new_game.draw_bg()
+
+
+# notes fro tmw. - the collisions work perfectly, the simplest implementation considering the use case for now. 
+# the for pipe loop breaks out for every collision, but the main while loop re-starts the pipe loop, causing a glitch scene, which can turn into infinite  mode 
+# so, keep that ideology to implement a infinite and a hard mode and  tmw can be the final work cut out 
+# where after a certain points i can change the spawn rate and pacing, and add difficulties now. 
