@@ -116,7 +116,7 @@ class Bird(Background):
         
         
         
-        self.impulse = -5
+        self.impulse = -7
         
         #smooth motion
         self.gravity = 0.3
