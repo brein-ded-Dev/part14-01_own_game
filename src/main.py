@@ -294,10 +294,18 @@ class Extra (Bird):
     
     #start screen
     def blurred (self):
-            self._window.blit(self.blur,(-50,-50))
-            self._window.blit(self.start,(675,250))
-            
-            self.draw_extra()
+        instructions = self.font.render("Selected game mode will be invisible, please click on the mode to select accordingly.",True,(0,0,0))
+        instructions1 = self.font.render("Press Space to flap",True,(0,0,0))
+        instructions2 = self.font.render("Easy Mode is selected by default and is never ending.",True,(0,0,0))
+        instructions4= self.font.render("Hard Mode will let you collide 3 times before game over.",True,(0,0,0))
+        self._window.blit(self.blur,(-50,-50))
+        self._window.blit(self.start,(675,250))
+        self._window.blit(instructions,(300,0))
+        self._window.blit(instructions1,(500,50))
+        self._window.blit(instructions2,(500,100))
+        self._window.blit(instructions4,(500,150))
+        
+        self.draw_extra()
     
     #mode select     
     def mode(self,pos):
@@ -330,7 +338,9 @@ class Extra (Bird):
 
             
 def main():
-    #class object to run game
+    # 1 pipe spawns every 80 frames, increasing difficulty reduces this amount by 10 (game fps =60)
+    difficulty = 80
+    
     new_game = Extra()
     counter = 0  
     pipes =[]
@@ -366,17 +376,20 @@ def main():
         py.display.flip()
         new_game.draw_bg()
         if game:
-            if counter % 80 ==0 :
+            if counter % difficulty  ==0 :
                 pipes.append(Pipes())
             
             for pipe in pipes[:]:
                 if pipe.draw_pipe(new_game):
                     pass
-                elif new_game.hard:
+                elif new_game.hard and Pipes.collisions >=3:
                     main()
                     return
                 else: break
-        
+        if counter >= 1500:
+            counter =0 
+            difficulty -=10
+            
         new_game.draw_bird()
         new_game.draw_extra()
         
