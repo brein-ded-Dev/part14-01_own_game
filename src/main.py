@@ -3,8 +3,6 @@ import math
 import random as r
 
 # variable responsible for running the game
-game = True
-py.init()
 class Assets:
     #basic and necessary assets of pygame
     
@@ -188,6 +186,7 @@ class Pipes(Bird):
         #for point keeping
         self.coin = py.image.load("src/coin.png").convert_alpha()
         self.collected = False
+        self.coll = False
         
         #spawn rate = how far apart will each pipe/obstacle be. 
         self.spawn_rate = 100      
@@ -243,22 +242,36 @@ class Pipes(Bird):
             
     # collision check with pipes         
     def collision(self,obj):
-        if obj._bird_rect.colliderect(self.pipe_rect) or  obj._bird_rect.colliderect(self.pipe_up_rect):
+        if (obj._bird_rect.colliderect(self.pipe_rect) or  obj._bird_rect.colliderect(self.pipe_up_rect)) and not self.coll:
             Pipes.collisions +=1
+            self.coll = True
             return False  
         else: return True      
               
 class Extra (Bird):
+    
     def __init__(self):
         super().__init__()
+        #for fonts.
+        py.init()
+
+        #mode select
         self._hard = py.image.load("src/Screenshot from 2025-10-15 13-55-37.png").convert_alpha()
-        self._easy = py.image.load("src/Screenshot from 2025-10-15 13-54-58.png").convert_alpha()
-        self.blur = py.image.load("src/Screenshot from 2025-10-15 14-24-54.png").convert()
-        self.easy_bool = False
         self.hard_bool = False
+
+        self._easy = py.image.load("src/Screenshot from 2025-10-15 13-54-58.png").convert_alpha()
+        self.easy_bool = True
+
+        #start screen
+        self.blur = py.image.load("src/Screenshot from 2025-10-15 14-24-54.png").convert()
+        
+        self.start= py.image.load("src/start.png").convert_alpha()
+        self.start_bool = False
         self.font = py.font.SysFont("Arial",30)
         
+        #image scaling
         self.scale()
+        
     @property
     def easy(self):
         return self.easy_bool
@@ -270,77 +283,104 @@ class Extra (Bird):
         self._easy = py.transform.scale(self._easy,(150,50))
         self._hard = py.transform.scale(self._hard,(150,50))
         self.blur = py.transform.scale(self.blur,(1600,700))
-            
-    def point (self):
-        return self.font.render(f"Points: {Pipes.point}",True,(0,0,0))
     
+    #in game text for points       
+    def point (self):
+        return self.font.render(f"Points:{Pipes.point}",True,(0,0,0))
+    
+    #in game text for collision
     def collision(self):
             return self.font.render(f"Collision: {Pipes.collisions}",True,(0,0,0,))
-        
     
-    def mode(self):
-        if self.easy_bool and self.hard_bool:
-            self.easy_bool, self.hard_bool = True,False
-        elif self.easy_bool:
+    #start screen
+    def blurred (self):
+            self._window.blit(self.blur,(-50,-50))
+            self._window.blit(self.start,(675,250))
+            
+            self.draw_extra()
+    
+    #mode select     
+    def mode(self,pos):
+        if self._easy.get_rect(topleft= (0,0)).collidepoint(pos):
+            self.easy_bool = True
             self.hard_bool = False
-        elif self.hard_bool:
+        if self._hard.get_rect(topleft= (0,55)).collidepoint(pos):
+            self.hard_bool = True
             self.easy_bool = False
+        if self.start.get_rect(topleft=(675,250)).collidepoint(pos):
+            #resetting to 0 for every game
+            Pipes.collisions = 0
+            Pipes.point = 0
+            return True
     
+    #selected game mode is hidden    
     def draw_extra(self):
-        self._window.blit(self._easy,(0,0))
-        self._window.blit(self._hard,(0,52))
-        self._window.blit(self.point(),(0,540))
+        info = self.font.render(f"Press R to restart",True,(0,0,0))
+        
         if self.easy_bool:
-            self._window.blit(self.collision(),())
-        
-        
-        
+            self._window.blit(self._hard,(0,55))
+            self._window.blit(info,(400,545))
+            
+
+        if self.hard_bool:
+            self._window.blit(self._easy,(0,0))
+
+        self._window.blit(self.point(),(0,545))
+        self._window.blit(self.collision(),(130,545))
+
+            
 def main():
     #class object to run game
     new_game = Extra()
     counter = 0  
     pipes =[]
-
+    game = False
     while True:
         counter +=1
         #getting events from pygame
-        for event in py.event.get():
+        if not game:  
+                new_game.blurred()
+                for event in py.event.get():
+                    if event.type == py.QUIT:
+                        exit()
+                        
+                    if event.type == py.MOUSEBUTTONDOWN:
+                        game = new_game.mode(event.pos)
+        else:
+            for event in py.event.get():
             
-            #quit event
-            if event.type == py.QUIT:
-                game = False
-                print(Pipes.point)
-                exit()
-                
-            if event.type == py.KEYDOWN:
-                if event.key == py.K_SPACE:
-                    new_game.jump(True)
-                if event.key == py.K_z:
-                    main()
-                    return
-                
-                
+                #quit event
+                if event.type == py.QUIT:
+                    game = False
+                    exit()
+                    
+                if event.type == py.KEYDOWN:
+                    if event.key == py.K_SPACE:
+                        new_game.jump(True)
+                        
+                    if event.key == py.K_r:
+                        main()
+                        return
+                    
         #updating pygame display every Frame
         py.display.flip()
         new_game.draw_bg()
-        
-        if counter % 90 ==0 or counter ==1:
-            pipes.append(Pipes())
-        
-        for pipe in pipes[:]:
-            if pipe.draw_pipe(new_game):
-                pass
-            else:
-                break
+        if game:
+            if counter % 80 ==0 :
+                pipes.append(Pipes())
+            
+            for pipe in pipes[:]:
+                if pipe.draw_pipe(new_game):
+                    pass
+                elif new_game.hard:
+                    main()
+                    return
+                else: break
         
         new_game.draw_bird()
         new_game.draw_extra()
+        
         #running game with defined FPS
         new_game.clock.tick(new_game.FPS)
         
-
 main()
-    # notes fro tmw. - the collisions work perfectly, the simplest implementation considering the use case for now. 
-    # the for pipe loop breaks out for every collision, but the main while loop re-starts the pipe loop, causing a glitch scene, which can turn into infinite  mode 
-    # so, keep that ideology to implement a infinite and a hard mode and  tmw can be the final work cut out 
-    # where after a certain points i can change the spawn rate and pacing, and add difficulties now. 
